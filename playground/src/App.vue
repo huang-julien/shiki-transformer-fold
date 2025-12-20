@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import { codeToHtml } from 'shiki'
+ import { codeToHtml } from 'shiki'
 import { vueCode } from './fixtures/codeStrings'; 
-import { transformerHtmlFold } from '../../src/index'
+import { attachFoldToggleListener, transformerHtmlFold } from '../../src/index'
+import { onMounted } from 'vue';
 const html = await codeToHtml(vueCode, {
   lang: 'vue',
   theme: 'nord',
@@ -11,13 +11,14 @@ const html = await codeToHtml(vueCode, {
   ]
 })
  
+ onMounted(() => {
+  attachFoldToggleListener()
+ })
 </script>
 
 <template>
-  <div>
-    <component :is="'style'" v-text="foldStyles" />
-    <div v-html="html" />
-    <component :is="'script'" v-text="foldScript" />
+  <div> 
+    <div v-html="html" /> 
   </div> 
 </template>
  
