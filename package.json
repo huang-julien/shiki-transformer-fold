@@ -1,8 +1,8 @@
 {
-  "name": "packageName",
-  "version": "0.0.0",
-  "description": "",
-  "repository": "unjs/packageName",
+  "name": "shiki-transformer-fold",
+  "version": "0.1.0",
+  "description": "Shiki transformer to bring code folding support",
+  "repository": "huang-julien/shiki-transformer-fold",
   "license": "MIT",
   "sideEffects": false,
   "type": "module",
