@@ -1,5 +1,4 @@
 import type { ShikiTransformer } from 'shiki'
-import type { Element } from 'hast'
 
 export interface TransformerHtmlFoldOptions {
   /**
@@ -14,35 +13,51 @@ interface FoldRegion {
   endLine: number
 }
 
-/**
- * Self-closing/void HTML tags that don't need closing tags
- */
+declare module 'shiki' {
+  interface ShikiTransformerContextMeta {
+    /**
+     * Metadata added by transformerHtmlFold fromshiki-transformer-fold
+     */
+    transformerHtmlFold: {
+      /** Map of foldable regions detected in the code */
+      foldRegions: FoldRegion[]
+      /** Map of foldable regions detected in the code */
+      foldStartLines: Map<number, FoldRegion>
+      __lineIdCounter: number
+    }
+  }
+}
+ 
+/** Self-closing/void HTML tags that don't need closing tags */
 const VOID_TAGS = new Set([
   'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
   'link', 'meta', 'param', 'source', 'track', 'wbr',
-  // Common self-closing in XML/JSX
   'path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'ellipse',
 ])
 
- 
+const OPEN_TAG_REGEX = /<([a-zA-Z][a-zA-Z0-9\-_:.]*)[^>]*(?<!\/)>/g
+const CLOSE_TAG_REGEX = /<\/([a-zA-Z][a-zA-Z0-9\-_:.]*)\s*>/g
+const SELF_CLOSING_REGEX = /<([a-zA-Z][a-zA-Z0-9\-_:.]*)[^>]*\/>/g
 
 /**
- * Shiki transformer that adds a fold column on the left side of code blocks
- * Similar to VS Code's code folding functionality
+ * Shiki transformer that adds code folding functionality
+ * Similar to VS Code's code folding
  */
 export function transformerHtmlFold(options: TransformerHtmlFoldOptions = {}): ShikiTransformer {
-  const { classPrefix = 'shiki-fold' } = options
-
-  let __foldRegions: FoldRegion[] = []
-  let __foldStartLines: Set<number> = new Set()
+  const { classPrefix = 'shiki-fold' } = options  
 
   return {
     name: 'shiki-transformer-html-fold',
+
     tokens(lines) {
-      console.log(lines)
-       // Detect fold regions from raw tokens (runs before tree construction)
-      __foldRegions = detectFoldRegionsFromTokens(lines)
-      __foldStartLines = new Set(__foldRegions.map(r => r.startLine))
+      const foldRegions: FoldRegion[] =   detectFoldRegions(lines)
+      const foldStartLines: Map<number, FoldRegion> = new Map(foldRegions.map(r => [r.startLine, r]))
+ 
+      this.meta.transformerHtmlFold = {
+        foldRegions,
+        foldStartLines,
+        __lineIdCounter: 0,
+      } 
       return lines
     },
 
@@ -51,39 +66,23 @@ export function transformerHtmlFold(options: TransformerHtmlFoldOptions = {}): S
         type: 'element',
         tagName: 'style',
         properties: {},
-        children: [{
-          type: 'text',
-          value: transformerHtmlFoldStyle(classPrefix),
-        }],
+        children: [{ type: 'text', value: getStyles(classPrefix) }],
       })
     },
-  
+
     line(element, lineNumber) {
-      const lineIndex = lineNumber // lineNumber is 1-based
-       // Only add fold data if this line starts a fold region
-      if (__foldStartLines.has(lineIndex)) { 
-        const region = __foldRegions.find(r => r.startLine === lineIndex) 
-        if (region) {
-          // Make the line clickable for folding
-          element.properties['data-fold-start'] = String(region.startLine)
-          element.properties['data-fold-end'] = String(region.endLine)
-          element.properties['data-folded'] = 'false'
-          element.properties.class = ((element.properties.class || '') + ` ${classPrefix}-foldable`).trim()
-          // return {
-          //   type: 'element',
-          //   tagName: 'button',
-          //   properties: {
-          //     'aria-label': 'Toggle code fold',
-          //     'data-fold-start': String(region.startLine),
-          //     'data-fold-end': String(region.endLine),
-          //     'data-folded': 'false',
-          //     class: `${classPrefix}-foldable`,
-          //   },
-          //   children: [
-          //     element
-          //   ]
-          // }
-        }
+      const { transformerHtmlFold } = this.meta
+      // Assign unique ID to every line for resilience against other transformers
+      const lineId = `${classPrefix}-${transformerHtmlFold.__lineIdCounter++}`
+      element.properties['data-fold-line'] = lineId
+
+      const region = transformerHtmlFold.foldStartLines.get(lineNumber)
+      if (region) {
+        // Store the end line ID - we'll hide everything between this line and the end ID
+        const endLineId = `${classPrefix}-${region.endLine - 1}`
+        element.properties['data-fold-end-id'] = endLineId
+        element.properties['data-folded'] = 'false'
+        element.properties.class = `${element.properties.class || ''} ${classPrefix}-foldable`.trim()
       }
 
       return element
@@ -91,87 +90,60 @@ export function transformerHtmlFold(options: TransformerHtmlFoldOptions = {}): S
   }
 }
 
-/**
- * Detect foldable regions from raw token arrays (for use in tokens hook)
- */
-function detectFoldRegionsFromTokens(lines: { content: string }[][]): FoldRegion[] {
+/** Detect foldable regions from raw token arrays */
+function detectFoldRegions(lines: { content: string }[][]): FoldRegion[] {
   const regions: FoldRegion[] = []
   const stack: { tagName: string; line: number }[] = []
 
-  const openTagRegex = /<([a-zA-Z][a-zA-Z0-9\-_:.]*)[^>]*(?<!\/)>/g
-  const closeTagRegex = /<\/([a-zA-Z][a-zA-Z0-9\-_:.]*)\s*>/g
-  const selfClosingRegex = /<([a-zA-Z][a-zA-Z0-9\-_:.]*)[^>]*\/>/g
-
   for (const [lineIndex, lineTokens] of lines.entries()) {
     const text = lineTokens.map(t => t.content).join('')
+    const lineNum = lineIndex + 1
 
-    // Find all self-closing tags to exclude them
-    const selfClosingMatches = new Set<number>()
-    let selfMatch: RegExpExecArray | null
-    while ((selfMatch = selfClosingRegex.exec(text)) !== null) {
-      selfClosingMatches.add(selfMatch.index)
+    // Collect self-closing tag positions to exclude
+    const selfClosingPositions = new Set<number>()
+    for (const match of text.matchAll(SELF_CLOSING_REGEX)) {
+      selfClosingPositions.add(match.index!)
     }
-    selfClosingRegex.lastIndex = 0
 
-    // Find all opening tags
-    let openMatch: RegExpExecArray | null
-    while ((openMatch = openTagRegex.exec(text)) !== null) {
-      if (selfClosingMatches.has(openMatch.index)) {
-        continue
+    // Process opening tags
+    for (const match of text.matchAll(OPEN_TAG_REGEX)) {
+      const [_, tagName] = match
+      if(!tagName) continue
+      if (selfClosingPositions.has(match.index!)) continue
+      const tagNameLower = tagName.toLowerCase()
+      if (!VOID_TAGS.has(tagNameLower)) {
+        stack.push({ tagName: tagNameLower, line: lineNum })
       }
-      const tagName = openMatch[1].toLowerCase()
-      if (VOID_TAGS.has(tagName)) {
-        continue
-      }
-      stack.push({ tagName, line: lineIndex + 1 } )
     }
-    openTagRegex.lastIndex = 0
 
-    // Find all closing tags
-    let closeMatch: RegExpExecArray | null
-    while ((closeMatch = closeTagRegex.exec(text)) !== null) {
-      const tagName = closeMatch[1].toLowerCase()
-
+    // Process closing tags
+    for (const match of text.matchAll(CLOSE_TAG_REGEX)) {
+      const [_, tagName] = match
+      if(!tagName) continue
+      const tagNameLower = tagName.toLowerCase()
       for (let i = stack.length - 1; i >= 0; i--) {
-        const stackItem = stack[i]
-        if (stackItem && stackItem.tagName === tagName) {
-          const startLine = stackItem.line
-          const endLine = lineIndex + 1
-          if (endLine > startLine) {
-            regions.push({ startLine, endLine })
+        if (stack[i]?.tagName === tagNameLower) {
+          const startLine = stack[i]!.line
+          if (lineNum > startLine) {
+            regions.push({ startLine, endLine: lineNum })
           }
           stack.splice(i, 1)
           break
         }
       }
     }
-    closeTagRegex.lastIndex = 0
   }
 
   return regions
 }
 
-/**
- * Get default CSS styles for the fold functionality
- */
-function transformerHtmlFoldStyle(classPrefix: string = 'shiki-fold'): string {
+/** CSS styles for fold functionality */
+function getStyles(classPrefix: string): string {
   return `
-.shiki code {
-  display: grid;
-}
-
-.${classPrefix}-foldable {
-  cursor: pointer;
-}
-
-.${classPrefix}-foldable:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.${classPrefix}-hidden {
-  display: none !important;
-}
-
+.shiki code { display: grid; }
+.${classPrefix}-foldable { cursor: pointer; }
+.${classPrefix}-foldable:hover { background: rgba(255, 255, 255, 0.05); }
+.${classPrefix}-hidden { display: none !important; }
 .${classPrefix}-summary {
   display: inline;
   opacity: 0.5;
@@ -179,65 +151,58 @@ function transformerHtmlFoldStyle(classPrefix: string = 'shiki-fold'): string {
   margin-left: 0.5em;
   user-select: none;
   pointer-events: none;
-}
-`.trim()
+}`.trim()
 }
 
 /**
- * Attach a delegated click listener for fold toggles
- * Uses event delegation so it works with dynamically rendered content (frameworks, SSR, etc.)
- * Only needs to be called once - handles all current and future fold toggles
- * @param classPrefix - The class prefix used in the transformer (default: 'shiki-fold')
+ * Attach a delegated click listener for fold toggles.
+ * Uses event delegation so it works with dynamically rendered content.
+ * Only needs to be called once.
  */
 export function attachFoldToggleListener(classPrefix: string = 'shiki-fold'): void {
   if (typeof document === 'undefined') return
 
+  const hiddenClass = `${classPrefix}-hidden`
+  const summaryClass = `${classPrefix}-summary`
+
   document.addEventListener('click', (event) => {
-    const foldableLine = (event.target as Element).closest<HTMLElement>(`.${classPrefix}-foldable`)
-    if (!foldableLine) return
+    const line = (event.target as Element).closest<HTMLElement>(`.${classPrefix}-foldable`)
+    if (!line) return
 
-    const foldStart = Number.parseInt(foldableLine.dataset.foldStart || '0', 10)
-    const foldEnd = Number.parseInt(foldableLine.dataset.foldEnd || '0', 10)
-    const isFolded = foldableLine.dataset.folded === 'true'
+    const endId = line.dataset.foldEndId
+    if (!endId) return
 
-    // Toggle folded state
-    foldableLine.dataset.folded = String(!isFolded)
+    const isFolded = line.dataset.folded === 'true'
+    line.dataset.folded = String(!isFolded)
 
-    // Find the code block container
-    const codeBlock = foldableLine.closest('pre')
-    if (!codeBlock) return
+    // Collect lines to toggle by walking siblings until we hit the end ID
+    const linesToToggle: HTMLElement[] = []
+    let sibling = line.nextElementSibling as HTMLElement | null
 
-    // Get all lines in the code block
-    const lines = codeBlock.querySelectorAll('.line')
+    while (sibling) {
+      const siblingId = sibling.dataset.foldLine
+      linesToToggle.push(sibling)
 
-    // Handle fold summary indicator
-    const summaryClass = `${classPrefix}-summary`
-    const existingSummary = foldableLine.querySelector(`.${summaryClass}`)
-    
+      // Stop when we reach the end line (include it in the toggle)
+      if (siblingId === endId) break
+      sibling = sibling.nextElementSibling as HTMLElement | null
+    }
+
+    // Toggle summary indicator
+    const existingSummary = line.querySelector(`.${summaryClass}`)
     if (isFolded) {
-      // Unfolding - remove summary
-      if (existingSummary) {
-        existingSummary.remove()
-      }
+      existingSummary?.remove()
     } else {
-      // Folding - add summary
-      const hiddenCount = foldEnd - foldStart
+      const count = linesToToggle.length
       const summary = document.createElement('span')
       summary.className = summaryClass
-      summary.textContent = `... ${hiddenCount} line${hiddenCount > 1 ? 's' : ''} hidden`
-      foldableLine.append(summary)
+      summary.textContent = `... ${count} line${count > 1 ? 's' : ''} hidden`
+      line.append(summary)
     }
-    
-    // Toggle visibility of lines in the fold region (excluding the start line)
-    for (let i = foldStart; i < foldEnd; i++) {
-      const line = lines[i] as HTMLElement | undefined
-      if(line) {
-        if (isFolded) {
-          line.classList.remove(`${classPrefix}-hidden`)
-        } else {
-          line.classList.add(`${classPrefix}-hidden`)
-        }
-      }
+
+    // Toggle line visibility
+    for (const targetLine of linesToToggle) {
+      targetLine.classList.toggle(hiddenClass, !isFolded)
     }
   })
 }
