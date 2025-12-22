@@ -2,8 +2,8 @@
 
 <!-- automd:badges color=yellow -->
 
-[![npm version](https://img.shields.io/npm/v/packageName?color=yellow)](https://npmjs.com/package/packageName)
-[![npm downloads](https://img.shields.io/npm/dm/packageName?color=yellow)](https://npm.chart.dev/packageName)
+[![npm version](https://img.shields.io/npm/v/shiki-transformer-fold?color=yellow)](https://npmjs.com/package/shiki-transformer-fold)
+[![npm downloads](https://img.shields.io/npm/dm/shiki-transformer-fold?color=yellow)](https://npm.chart.dev/shiki-transformer-fold)
 
 <!-- /automd -->
 
@@ -28,7 +28,7 @@ Import:
 import {} from "pkg";
 ```
 
-**CDN** (Deno, Bun and Browsers)
+**CDN** (Deno and Browsers)
 
 ```js
 import {} from "https://esm.sh/pkg";
@@ -54,11 +54,11 @@ import {} from "https://esm.sh/pkg";
 
 <!-- automd:contributors license=MIT -->
 
-Published under the [MIT](https://github.com/unjs/packageName/blob/main/LICENSE) license.
-Made by [community](https://github.com/unjs/packageName/graphs/contributors) 💛
+Published under the [MIT](https://github.com/huang-julien/shiki-transformer-fold/blob/main/LICENSE) license.
+Made by [community](https://github.com/huang-julien/shiki-transformer-fold/graphs/contributors) 💛
 <br><br>
-<a href="https://github.com/unjs/packageName/graphs/contributors">
-<img src="https://contrib.rocks/image?repo=unjs/packageName" />
+<a href="https://github.com/huang-julien/shiki-transformer-fold/graphs/contributors">
+<img src="https://contrib.rocks/image?repo=huang-julien/shiki-transformer-fold" />
 </a>
 
 <!-- /automd -->
