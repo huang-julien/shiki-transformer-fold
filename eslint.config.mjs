@@ -6,6 +6,7 @@ export default unjs({
   ],
   rules: {
     // rule overrides
+    "unicorn/filename-case": "off",
   },
   markdown: {
     rules: {
