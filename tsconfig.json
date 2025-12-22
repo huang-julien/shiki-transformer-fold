@@ -16,5 +16,8 @@
     "allowImportingTsExtensions": true,
     "noImplicitOverride": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "./playground"
+  ]
 }
