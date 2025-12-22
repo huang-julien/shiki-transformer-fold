@@ -17,7 +17,5 @@
     "noImplicitOverride": true,
     "noEmit": true
   },
-  "exclude": [
-    "./playground"
-  ]
+  "exclude": ["./playground"]
 }
