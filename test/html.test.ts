@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createHighlighter } from "shiki";
-import { detectFoldRegions, transformerHtmlFold } from "../src/html.ts";
+import { detectFoldRegions, transformerRenderHtmlFold } from "../src/html.ts";
 
 describe("detectFoldRegions", () => {
   it("should detect simple div fold region", () => {
@@ -182,7 +182,7 @@ describe("detectFoldRegions", () => {
 
 describe("transformerHtmlFold", () => {
   it("should return a transformer with correct name", () => {
-    const transformer = transformerHtmlFold();
+    const transformer = transformerRenderHtmlFold();
     expect(transformer.name).toBe("shiki-transformer-html-fold");
   });
 
@@ -195,7 +195,7 @@ describe("transformerHtmlFold", () => {
     const result = highlighter.codeToHtml("<div>\n  content\n</div>", {
       lang: "html",
       theme: "github-dark",
-      transformers: [transformerHtmlFold()],
+      transformers: [transformerRenderHtmlFold()],
     });
 
     expect(result).toContain("shiki-fold");
@@ -212,7 +212,7 @@ describe("transformerHtmlFold", () => {
     const result = highlighter.codeToHtml("<div>\n  content\n</div>", {
       lang: "html",
       theme: "github-dark",
-      transformers: [transformerHtmlFold({ classPrefix: "custom-fold" })],
+      transformers: [transformerRenderHtmlFold({ classPrefix: "custom-fold" })],
     });
 
     expect(result).toContain("custom-fold");
@@ -229,7 +229,7 @@ describe("transformerHtmlFold", () => {
     const result = highlighter.codeToHtml("<div>\n  content\n</div>", {
       lang: "html",
       theme: "github-dark",
-      transformers: [transformerHtmlFold()],
+      transformers: [transformerRenderHtmlFold()],
     });
 
     expect(result).toContain('data-fold-line="shiki-fold-0"');
@@ -247,7 +247,7 @@ describe("transformerHtmlFold", () => {
     const result = highlighter.codeToHtml("<div>\n  content\n</div>", {
       lang: "html",
       theme: "github-dark",
-      transformers: [transformerHtmlFold()],
+      transformers: [transformerRenderHtmlFold()],
     });
 
     expect(result).toContain("shiki-fold-foldable");
@@ -265,7 +265,7 @@ describe("transformerHtmlFold", () => {
     const result = highlighter.codeToHtml("<div>\n  content\n</div>", {
       lang: "html",
       theme: "github-dark",
-      transformers: [transformerHtmlFold()],
+      transformers: [transformerRenderHtmlFold()],
     });
 
     expect(result).toContain("<style>");

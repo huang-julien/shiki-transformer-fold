@@ -58,10 +58,9 @@ const CLOSE_TAG_REGEX = /<\/([a-zA-Z][a-zA-Z0-9\-_:.]*)\s*>/g;
 const SELF_CLOSING_REGEX = /<([a-zA-Z][a-zA-Z0-9\-_:.]*)[^>]*\/>/g;
 
 /**
- * Shiki transformer that adds code folding functionality
- * Similar to VS Code's code folding
+ * Shiki transformer that adds code folding functionality for HTML-like tags.
  */
-export function transformerHtmlFold(
+export function transformerRenderHtmlFold(
   options: TransformerHtmlFoldOptions = {},
 ): ShikiTransformer {
   const { classPrefix = "shiki-fold" } = options;
