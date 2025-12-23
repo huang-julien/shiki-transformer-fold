@@ -1,2 +1,2 @@
-export { transformerRenderHtmlFold as transformerHtmlFold } from "./html.ts";
+export { transformerRenderHtmlFold } from "./html.ts";
 export { attachFoldToggleListener } from "./listeners.ts";
