@@ -18,11 +18,14 @@ Install the package:
 npx nypm install shiki-transformer-fold
 ```
 
-Add the transformer 
+Add the transformer
 
 ```ts
 import { codeToHtml } from "shiki";
-import { attachFoldToggleListener, transformerRenderHtmlFold } from "shiki-transformer-fold";
+import {
+  attachFoldToggleListener,
+  transformerRenderHtmlFold,
+} from "shiki-transformer-fold";
 
 const html = await codeToHtml(code, {
   lang: "html",
