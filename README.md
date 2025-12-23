@@ -1,4 +1,4 @@
-# packageName
+# shiki-transformer-fold
 
 <!-- automd:badges color=yellow -->
 
@@ -7,7 +7,7 @@
 
 <!-- /automd -->
 
-This is my package description.
+Code folding support for shiki.
 
 ## Usage
 
@@ -15,26 +15,25 @@ Install the package:
 
 ```sh
 # ✨ Auto-detect (supports npm, yarn, pnpm, deno and bun)
-npx nypm install packageName
+npx nypm install shiki-transformer-fold
 ```
 
-Import:
+Add the transformer 
 
-<!-- automd:jsimport cdn name="pkg" -->
+```ts
+import { codeToHtml } from "shiki";
+import { attachFoldToggleListener, transformerRenderHtmlFold } from "shiki-transformer-fold";
 
-**ESM** (Node.js, Bun, Deno)
+const html = await codeToHtml(code, {
+  lang: "html",
+  theme: "nord",
+  transformers: [transformerRenderHtmlFold()],
+});
 
-```js
-import {} from "pkg";
+// attach listeners to allow opening and closing the rendered code
+// need to be called only once
+attachFoldToggleListener();
 ```
-
-**CDN** (Deno and Browsers)
-
-```js
-import {} from "https://esm.sh/pkg";
-```
-
-<!-- /automd -->
 
 ## Development
 
