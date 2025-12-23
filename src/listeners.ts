@@ -1,3 +1,5 @@
+let toggleListenerAttached = false;
+
 /**
  * Attach a delegated click listener for fold toggles.
  * Uses event delegation so it works with dynamically rendered content.
@@ -6,7 +8,8 @@
 export function attachFoldToggleListener(
   classPrefix: string = "shiki-fold",
 ): void {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined" || toggleListenerAttached) return;
+  toggleListenerAttached = true;
 
   const hiddenClass = `${classPrefix}-hidden`;
   const summaryClass = `${classPrefix}-summary`;
