@@ -90,7 +90,9 @@ export function transformerRenderHtmlFold(
         for (const region of foldRegions) {
           if (region.level === foldLevel) {
             // Mark startLine with the count of hidden lines
-            foldedRanges.set(region.startLine, { hiddenCount: region.endLine - region.startLine });
+            foldedRanges.set(region.startLine, {
+              hiddenCount: region.endLine - region.startLine,
+            });
             // Mark lines between start+1 and end as hidden
             for (let i = region.startLine + 1; i <= region.endLine; i++) {
               foldedRanges.set(i, { hiddenCount: -1 }); // -1 means this line should be hidden
@@ -135,7 +137,9 @@ export function transformerRenderHtmlFold(
       if (region) {
         // Store the end line ID - we'll hide everything between this line and the end ID
         const endLineId = `${classPrefix}-${region.endLine - 1}`;
-        const shouldFold = transformerHtmlFold.foldLevel > 0 && region.level === transformerHtmlFold.foldLevel;
+        const shouldFold =
+          transformerHtmlFold.foldLevel > 0 &&
+          region.level === transformerHtmlFold.foldLevel;
         element.properties["data-fold-end-id"] = endLineId;
         element.properties["data-fold-level"] = String(region.level);
         element.properties["data-folded"] = shouldFold ? "true" : "false";
@@ -149,7 +153,12 @@ export function transformerRenderHtmlFold(
             type: "element",
             tagName: "span",
             properties: { class: `${classPrefix}-summary` },
-            children: [{ type: "text", value: `... ${count} line${count > 1 ? "s" : ""} hidden` }],
+            children: [
+              {
+                type: "text",
+                value: `... ${count} line${count > 1 ? "s" : ""} hidden`,
+              },
+            ],
           });
         }
       }
