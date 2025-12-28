@@ -10,7 +10,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</div>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should detect nested fold regions", () => {
@@ -23,8 +23,8 @@ describe("detectFoldRegions", () => {
     ];
     const regions = detectFoldRegions(lines);
     expect(regions).toHaveLength(2);
-    expect(regions).toContainEqual({ startLine: 2, endLine: 4 });
-    expect(regions).toContainEqual({ startLine: 1, endLine: 5 });
+    expect(regions).toContainEqual({ startLine: 2, endLine: 4, level: 2 });
+    expect(regions).toContainEqual({ startLine: 1, endLine: 5, level: 1 });
   });
 
   it("should ignore self-closing tags", () => {
@@ -34,7 +34,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</div>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should ignore void tags", () => {
@@ -46,7 +46,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</div>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 5 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 5, level: 1 }]);
   });
 
   it("should handle multiple sibling elements", () => {
@@ -60,8 +60,8 @@ describe("detectFoldRegions", () => {
     ];
     const regions = detectFoldRegions(lines);
     expect(regions).toHaveLength(2);
-    expect(regions).toContainEqual({ startLine: 1, endLine: 3 });
-    expect(regions).toContainEqual({ startLine: 4, endLine: 6 });
+    expect(regions).toContainEqual({ startLine: 1, endLine: 3, level: 1 });
+    expect(regions).toContainEqual({ startLine: 4, endLine: 6, level: 1 });
   });
 
   it("should not create region for single-line elements", () => {
@@ -78,7 +78,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</svg>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 4 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 4, level: 1 }]);
   });
 
   it("should handle custom element names with hyphens", () => {
@@ -88,7 +88,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</my-component>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should handle tags with namespaces", () => {
@@ -98,7 +98,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</ns:element>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should handle empty lines", () => {
@@ -110,7 +110,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</div>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 5 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 5, level: 1 }]);
   });
 
   it("should handle multiple tokens per line", () => {
@@ -120,7 +120,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</" }, { content: "div" }, { content: ">" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should handle tags with attributes", () => {
@@ -130,7 +130,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</div>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should handle deeply nested elements", () => {
@@ -147,10 +147,10 @@ describe("detectFoldRegions", () => {
     ];
     const regions = detectFoldRegions(lines);
     expect(regions).toHaveLength(4);
-    expect(regions).toContainEqual({ startLine: 4, endLine: 6 });
-    expect(regions).toContainEqual({ startLine: 3, endLine: 7 });
-    expect(regions).toContainEqual({ startLine: 2, endLine: 8 });
-    expect(regions).toContainEqual({ startLine: 1, endLine: 9 });
+    expect(regions).toContainEqual({ startLine: 4, endLine: 6, level: 4 });
+    expect(regions).toContainEqual({ startLine: 3, endLine: 7, level: 3 });
+    expect(regions).toContainEqual({ startLine: 2, endLine: 8, level: 2 });
+    expect(regions).toContainEqual({ startLine: 1, endLine: 9, level: 1 });
   });
 
   it("should handle case-insensitive tag matching", () => {
@@ -160,7 +160,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</div>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should return empty array for no foldable regions", () => {
@@ -176,7 +176,7 @@ describe("detectFoldRegions", () => {
       [{ content: "</div> text after" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 });
 
@@ -310,7 +310,7 @@ describe("edge cases", () => {
       [{ content: "</script>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should handle tags with whitespace in closing", () => {
@@ -320,7 +320,7 @@ describe("edge cases", () => {
       [{ content: "</div   >" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should handle multiple tags on same line", () => {
@@ -340,7 +340,7 @@ describe("edge cases", () => {
       [{ content: "</h1>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 
   it("should handle underscore in tag names", () => {
@@ -350,6 +350,6 @@ describe("edge cases", () => {
       [{ content: "</my_element>" }],
     ];
     const regions = detectFoldRegions(lines);
-    expect(regions).toEqual([{ startLine: 1, endLine: 3 }]);
+    expect(regions).toEqual([{ startLine: 1, endLine: 3, level: 1 }]);
   });
 });

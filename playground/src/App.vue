@@ -9,7 +9,11 @@ import { onMounted } from "vue";
 const html = await codeToHtml(vueCode, {
   lang: "vue",
   theme: "nord",
-  transformers: [transformerRenderHtmlFold()],
+  transformers: [
+    transformerRenderHtmlFold({
+      foldLevel: 0,
+    }),
+  ],
 });
 
 onMounted(() => {
