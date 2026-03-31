@@ -35,7 +35,7 @@
     "obuild": "^0.2.1",
     "prettier": "^3.6.2",
     "shiki": "^3.20.0",
-    "typescript": "^5.9.2",
+    "typescript": "^6.0.2",
     "vitest": "^3.2.4"
   },
   "packageManager": "pnpm@10.15.0"
